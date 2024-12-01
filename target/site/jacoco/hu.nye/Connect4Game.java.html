@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Connect4Game.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Dajka Bence Imre</a> &gt; <a href="index.source.html" class="el_package">hu.nye</a> &gt; <span class="el_source">Connect4Game.java</span></div><h1>Connect4Game.java</h1><pre class="source lang-java linenums">package hu.nye;
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Scanner;
+
+
+public class Connect4Game {
+    private final Player player1;
+    private final Player player2;
+    private Player currentPlayer;
+    private final GameBoard gameBoard;
+
+    private static final String HIGH_SCORE_FILE = &quot;highscores.txt&quot;;
+
+<span class="fc" id="L18">    public Connect4Game(Player player1, Player player2) {</span>
+<span class="fc" id="L19">        this.player1 = player1;</span>
+<span class="fc" id="L20">        this.player2 = player2;</span>
+<span class="fc" id="L21">        this.currentPlayer = player1;</span>
+<span class="fc" id="L22">        this.gameBoard = new GameBoard();</span>
+<span class="fc" id="L23">    }</span>
+
+    public void start() {
+<span class="nc" id="L26">        Scanner scanner = new Scanner(System.in);</span>
+<span class="nc" id="L27">        String filePath = &quot;GamesBoardTablePause.txt&quot;;</span>
+
+        while (true) {
+<span class="nc" id="L30">            displayBoard();</span>
+<span class="nc" id="L31">            System.out.println(&quot;Press 0 to save the game, h to view high scores, q to quit, or choose a column (a,b,c,d,e,f,g): &quot;);</span>
+
+<span class="nc bnc" id="L33" title="All 2 branches missed.">            if (currentPlayer.equals(player1)) {</span>
+<span class="nc" id="L34">                String input = scanner.nextLine();</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">                if (input.equals(&quot;0&quot;)) {</span>
+                    try {
+<span class="nc" id="L37">                        saveGameBoard(filePath);</span>
+<span class="nc" id="L38">                        System.out.println(&quot;Game saved successfully.&quot;);</span>
+<span class="nc" id="L39">                    } catch (IOException e) {</span>
+<span class="nc" id="L40">                        System.out.println(&quot;Failed to save the game.&quot;);</span>
+<span class="nc" id="L41">                    }</span>
+<span class="nc" id="L42">                    continue;</span>
+                }
+
+<span class="nc bnc" id="L45" title="All 2 branches missed.">                if (input.equals(&quot;q&quot;)) {</span>
+<span class="nc" id="L46">                    System.out.println(&quot;Goodbye!&quot;);</span>
+<span class="nc" id="L47">                    System.exit(0);</span>
+                }
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">                if (input.equals(&quot;h&quot;)) {</span>
+                    try {
+<span class="nc" id="L52">                        System.out.println(&quot;Showing highscores:&quot;);</span>
+<span class="nc" id="L53">                        showHighScores();</span>
+<span class="nc" id="L54">                        System.exit(0);</span>
+<span class="nc" id="L55">                    } catch (IOException e) {</span>
+<span class="nc" id="L56">                        System.out.println(&quot;Error loading highscores.&quot;);</span>
+<span class="nc" id="L57">                    }</span>
+<span class="nc" id="L58">                    continue;</span>
+                }
+
+<span class="nc" id="L61">                int col = input.charAt(0) - 'a';</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">                if (!gameBoard.playMove(col, currentPlayer.getToken())) {</span>
+<span class="nc" id="L63">                    System.out.println(&quot;Invalid move. Try again.&quot;);</span>
+<span class="nc" id="L64">                    continue;</span>
+                }
+<span class="nc" id="L66">            } else {</span>
+
+<span class="nc" id="L68">                int col = generateComputerMove();</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">                if (gameBoard.playMove(col, currentPlayer.getToken())) {</span>
+<span class="nc" id="L70">                    System.out.println(&quot;Computer plays in column: &quot; + (char) ('a' + col));</span>
+                } else {
+<span class="nc" id="L72">                    System.out.println(&quot;Computer tried an invalid move. Re-trying...&quot;);</span>
+<span class="nc" id="L73">                    continue;</span>
+                }
+            }
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">            if (checkWin()) {</span>
+<span class="nc" id="L78">                displayBoard();</span>
+<span class="nc" id="L79">                System.out.println(currentPlayer.getName() + &quot; wins!&quot;);</span>
+
+<span class="nc" id="L81">                updateHighScores(currentPlayer.getName());</span>
+
+                try {
+<span class="nc" id="L84">                    clearGameBoardFile(filePath);</span>
+<span class="nc" id="L85">                    System.out.println(&quot;Game board file cleared.&quot;);</span>
+<span class="nc" id="L86">                } catch (IOException e) {</span>
+<span class="nc" id="L87">                    System.out.println(&quot;Failed to clear the game board file.&quot;);</span>
+<span class="nc" id="L88">                }</span>
+<span class="nc" id="L89">                break;</span>
+            }
+
+<span class="nc bnc" id="L92" title="All 2 branches missed.">            if (checkDraw()) {</span>
+<span class="nc" id="L93">                displayBoard();</span>
+<span class="nc" id="L94">                System.out.println(&quot;It's a draw!&quot;);</span>
+<span class="nc" id="L95">                break;</span>
+            }
+
+<span class="nc" id="L98">            switchPlayer();</span>
+        }
+<span class="nc" id="L100">    }</span>
+
+    void clearGameBoardFile(String filePath) throws IOException {
+<span class="nc" id="L103">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            for (int i = 0; i &lt; GameBoard.ROWS; i++) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                for (int j = 0; j &lt; GameBoard.COLS; j++) {</span>
+<span class="nc" id="L106">                    writer.write('.');  // Write empty cell</span>
+                }
+<span class="nc" id="L108">                writer.newLine();</span>
+            }
+<span class="nc" id="L110">            writer.flush();</span>
+<span class="nc" id="L111">        } catch (IOException e) {</span>
+<span class="nc" id="L112">            System.out.println(&quot;Error clearing game board file: &quot; + e.getMessage());</span>
+<span class="nc" id="L113">            throw e;</span>
+<span class="nc" id="L114">        }</span>
+<span class="nc" id="L115">    }</span>
+
+    public void switchPlayer() {
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        currentPlayer = (currentPlayer.equals(player1)) ? player2 : player1;</span>
+<span class="fc" id="L119">    }</span>
+
+    public boolean checkWin() {
+<span class="fc" id="L122">        char[][] board = gameBoard.getBoard();</span>
+<span class="fc" id="L123">        char token = currentPlayer.getToken();</span>
+
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        for (int row = 0; row &lt; GameBoard.ROWS; row++) {</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">            for (int col = 0; col &lt; GameBoard.COLS - 3; col++) {</span>
+<span class="pc bpc" id="L127" title="2 of 8 branches missed.">                if (board[row][col] == token &amp;&amp;</span>
+                        board[row][col + 1] == token &amp;&amp;
+                        board[row][col + 2] == token &amp;&amp;
+                        board[row][col + 3] == token) {
+<span class="fc" id="L131">                    return true;</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        for (int col = 0; col &lt; GameBoard.COLS; col++) {</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">            for (int row = 0; row &lt; GameBoard.ROWS - 3; row++) {</span>
+<span class="pc bpc" id="L138" title="2 of 8 branches missed.">                if (board[row][col] == token &amp;&amp;</span>
+                        board[row + 1][col] == token &amp;&amp;
+                        board[row + 2][col] == token &amp;&amp;
+                        board[row + 3][col] == token) {
+<span class="fc" id="L142">                    return true;</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        for (int row = 3; row &lt; GameBoard.ROWS; row++) {</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            for (int col = 0; col &lt; GameBoard.COLS - 3; col++) {</span>
+<span class="pc bpc" id="L149" title="2 of 8 branches missed.">                if (board[row][col] == token &amp;&amp;</span>
+                        board[row - 1][col + 1] == token &amp;&amp;
+                        board[row - 2][col + 2] == token &amp;&amp;
+                        board[row - 3][col + 3] == token) {
+<span class="fc" id="L153">                    return true;</span>
+                }
+            }
+        }
+
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">        for (int row = 0; row &lt; GameBoard.ROWS - 3; row++) {</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">            for (int col = 0; col &lt; GameBoard.COLS - 3; col++) {</span>
+<span class="pc bpc" id="L160" title="4 of 8 branches missed.">                if (board[row][col] == token &amp;&amp;</span>
+                        board[row + 1][col + 1] == token &amp;&amp;
+                        board[row + 2][col + 2] == token &amp;&amp;
+                        board[row + 3][col + 3] == token) {
+<span class="fc" id="L164">                    return true;</span>
+                }
+            }
+        }
+
+<span class="nc" id="L169">        return false;</span>
+    }
+
+    public boolean checkDraw() {
+<span class="fc" id="L173">        char[][] board = gameBoard.getBoard();</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">        for (int col = 0; col &lt; GameBoard.COLS; col++) {</span>
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">            if (board[0][col] == '.') {</span>
+<span class="nc" id="L176">                return false;</span>
+            }
+        }
+<span class="fc" id="L179">        return true;</span>
+    }
+
+    public int generateComputerMove() {
+<span class="fc" id="L183">        Random rand = new Random();</span>
+<span class="fc" id="L184">        return rand.nextInt(GameBoard.COLS);</span>
+    }
+
+    void displayBoard() {
+<span class="nc" id="L188">        char[][] board = gameBoard.getBoard();</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        for (int i = 0; i &lt; GameBoard.ROWS; i++) {</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">            for (int j = 0; j &lt; GameBoard.COLS; j++) {</span>
+<span class="nc" id="L191">                System.out.print(board[i][j] + &quot; &quot;);</span>
+            }
+<span class="nc" id="L193">            System.out.println();</span>
+        }
+<span class="nc" id="L195">    }</span>
+
+    public void loadGameBoard(String filePath) throws IOException {
+<span class="fc" id="L198">        BufferedReader reader = new BufferedReader(new FileReader(filePath));</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        for (int i = 0; i &lt; gameBoard.getBoard().length; i++) {</span>
+<span class="fc" id="L200">            String line = reader.readLine();</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">            for (int j = 0; j &lt; gameBoard.getBoard()[i].length; j++) {</span>
+<span class="fc" id="L202">                gameBoard.getBoard()[i][j] = line.charAt(j);</span>
+            }
+        }
+<span class="fc" id="L205">        reader.close();</span>
+<span class="fc" id="L206">    }</span>
+
+    public void saveGameBoard(String filePath) throws IOException {
+<span class="fc" id="L209">        BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        for (char[] row : gameBoard.getBoard()) {</span>
+<span class="fc bfc" id="L211" title="All 2 branches covered.">            for (char cell : row) {</span>
+<span class="fc" id="L212">                writer.write(cell);</span>
+            }
+<span class="fc" id="L214">            writer.newLine();</span>
+        }
+<span class="fc" id="L216">        writer.close();</span>
+<span class="fc" id="L217">    }</span>
+
+    public void updateHighScores(String winnerName) {
+<span class="fc" id="L220">        Map&lt;String, Integer&gt; scores = loadHighScores();</span>
+<span class="fc" id="L221">        scores.put(winnerName, scores.getOrDefault(winnerName, 0) + 1);</span>
+<span class="fc" id="L222">        saveHighScores(scores);</span>
+<span class="fc" id="L223">    }</span>
+
+    public Map&lt;String, Integer&gt; loadHighScores() {
+<span class="fc" id="L226">        Map&lt;String, Integer&gt; scores = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L227">        try (BufferedReader reader = new BufferedReader(new FileReader(HIGH_SCORE_FILE))) {</span>
+            String line;
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            while ((line = reader.readLine()) != null) {</span>
+<span class="fc" id="L230">                String[] parts = line.split(&quot;:&quot;);</span>
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">                if (parts.length == 2) {</span>
+<span class="fc" id="L232">                    String name = parts[0].trim();</span>
+<span class="fc" id="L233">                    int count = Integer.parseInt(parts[1].trim());</span>
+<span class="fc" id="L234">                    scores.put(name, count);</span>
+                }
+<span class="fc" id="L236">            }</span>
+<span class="nc" id="L237">        } catch (IOException e) {</span>
+<span class="nc" id="L238">            System.out.println(&quot;Could not load high scores: &quot; + e.getMessage());</span>
+<span class="fc" id="L239">        }</span>
+<span class="fc" id="L240">        return scores;</span>
+    }
+
+    public void saveHighScores(Map&lt;String, Integer&gt; scores) {
+<span class="fc" id="L244">        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HIGH_SCORE_FILE))) {</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">            for (Map.Entry&lt;String, Integer&gt; entry : scores.entrySet()) {</span>
+<span class="fc" id="L246">                writer.write(entry.getKey() + &quot;: &quot; + entry.getValue());</span>
+<span class="fc" id="L247">                writer.newLine();</span>
+<span class="fc" id="L248">            }</span>
+<span class="nc" id="L249">        } catch (IOException e) {</span>
+<span class="nc" id="L250">            System.out.println(&quot;Could not save high scores: &quot; + e.getMessage());</span>
+<span class="fc" id="L251">        }</span>
+<span class="fc" id="L252">    }</span>
+
+    void showHighScores() throws IOException {
+<span class="fc" id="L255">        File file = new File(HIGH_SCORE_FILE);</span>
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">        if (!file.exists()) {</span>
+<span class="nc" id="L257">            System.out.println(&quot;No high scores available.&quot;);</span>
+<span class="nc" id="L258">            return;</span>
+        }
+
+<span class="fc" id="L261">        try (BufferedReader reader = new BufferedReader(new FileReader(HIGH_SCORE_FILE))) {</span>
+            String line;
+<span class="fc" id="L263">            System.out.println(&quot;High Scores:&quot;);</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">            while ((line = reader.readLine()) != null) {</span>
+<span class="fc" id="L265">                System.out.println(line);</span>
+            }
+<span class="nc" id="L267">        } catch (IOException e) {</span>
+<span class="nc" id="L268">            System.out.println(&quot;Error reading high scores: &quot; + e.getMessage());</span>
+<span class="nc" id="L269">            throw e;</span>
+<span class="fc" id="L270">        }</span>
+<span class="fc" id="L271">    }</span>
+
+    public GameBoard getGameBoard() {
+<span class="fc" id="L274">        return gameBoard;</span>
+    }
+
+    public Player getCurrentPlayer() {
+<span class="fc" id="L278">        return currentPlayer;</span>
+    }
+
+    public static void main(String[] args) throws IOException {
+<span class="nc" id="L282">        Scanner scanner = new Scanner(System.in);</span>
+<span class="nc" id="L283">        System.out.print(&quot;Enter player 1 name: &quot;);</span>
+<span class="nc" id="L284">        String player1Name = scanner.nextLine();</span>
+<span class="nc" id="L285">        Player player1 = new Player(player1Name, 'Y');</span>
+<span class="nc" id="L286">        Player player2 = new Player(&quot;Computer&quot;, 'R');</span>
+
+<span class="nc" id="L288">        Connect4Game game = new Connect4Game(player1, player2);</span>
+<span class="nc" id="L289">        String filePath = &quot;GameBoardTable.txt&quot;;</span>
+<span class="nc" id="L290">        File file = new File(filePath);</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">        if (file.exists()) {</span>
+<span class="nc" id="L292">            game.loadGameBoard(filePath);</span>
+        }
+<span class="nc" id="L294">        game.start();</span>
+<span class="nc" id="L295">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
